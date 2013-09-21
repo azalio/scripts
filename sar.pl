@@ -32,13 +32,15 @@ my @files = </var/log/sysstat/sa[0-9]?>;
 @files = sort @files;	
 
 foreach (@files) {
+
+my $file = $_;
 	
 my ( @hostname,@kbmemfree,@kbmemused );
 
 #mem usage
-#open(SAR,"sadf -dt /var/log/sysstat/sa19 -- -r | ");
-#say $_;
-open(SAR,"sadf -dt $_ -- -r | ");
+#open(SAR,"sadf -dt $file -- -r | ");
+#say $file;
+open(SAR,"sadf -dt $file -- -r | ");
 while(<SAR>) {
 	next if $. == 1;
 ## hostname;interval;timestamp;kbmemfree;kbmemused;%memused;kbbuffers;kbcached;kbcommit;%commit;kbactive;kbinact
@@ -56,7 +58,7 @@ $sar_stat{'memused'} += av(\@kbmemused);
 
 my ( @tps,@rtps,@wtps,@bread,@bwrtn );
 
-open(SAR,"sadf -dt /var/log/sysstat/sa19 -- -b | ");
+open(SAR,"sadf -dt $file -- -b | ");
 while(<SAR>) {
 	next if $. == 1;
 	( undef,undef,undef, $tps[$.] ) = split(/;/);
@@ -88,13 +90,13 @@ my $major = int( $rdev / 256 );
 my $pv_dev =  "dev$major-$minor";
 #say $pv_dev;
 
-# sadf -dt /var/log/sysstat/sa19 -- -d | head
+# sadf -dt $file -- -d | head
 # hostname;interval;timestamp;DEV;tps;rd_sec/s;wr_sec/s;avgrq-sz;avgqu-sz;await;svctm;%util
 #mail-srv01g;599;2013-09-19 00-45-01;dev8-0;13,89;0,28;766,76;55,24;0,21;15,44;1,59;2,21
 
 my ( @dev,@dev_tps,@await,@util ) = 0;
 
-open (DEV,"sadf -dt /var/log/sysstat/sa19 -- -d | ");
+open (DEV,"sadf -dt $file -- -d | ");
 while (<DEV>) {
 	next if $. == 1;
 	( undef,undef,undef,$dev[$.],$dev_tps[$.],undef,undef,undef,undef,$await[$.],undef,$util[$.] ) = split(/;/);
@@ -109,12 +111,12 @@ $sar_stat{'await'} += av(\@await);
 #say "average util $pv_dev " . av(\@util);
 $sar_stat{'util'} += av(\@util); 
 
-# sadf -dt -P ALL /var/log/sysstat/sa19 | head -2
+# sadf -dt -P ALL $file | head -2
 # hostname;interval;timestamp;CPU;%user;%nice;%system;%iowait;%steal;%idle
 #mail-srv01g;599;2013-09-19 00-45-01;-1;0,27;0,00;0,10;0,02;0,00;99,61
 
 my (@cpu,@cpu_iowait,@idle);
-open(CPU,"sadf -dt -P ALL /var/log/sysstat/sa19 | ");
+open(CPU,"sadf -dt -P ALL $file | ");
 
 while (<CPU>) {
 	next if $. == 1;
@@ -128,12 +130,12 @@ $sar_stat{'cpu_iowait'} += av(\@cpu_iowait);
 #say "average cpu_idle " . av(\@idle);
 $sar_stat{'cpu_idle'} += av(\@idle); 
 
-# sadf -dt /var/log/sysstat/sa19 -- -q | head -2
+# sadf -dt $file -- -q | head -2
 # hostname;interval;timestamp;runq-sz;plist-sz;ldavg-1;ldavg-5;ldavg-15;blocked
 #mail-srv01g;599;2013-09-19 00-45-01;5;391;0,21;0,11;0,10;0
 
 my (@ldavg15,@blocked);
-open(LA,"sadf -dt /var/log/sysstat/sa19 -- -q | ");
+open(LA,"sadf -dt $file -- -q | ");
 while (<LA>) {
 	next if $. == 1;
 	( undef,undef,undef,undef,undef,undef,undef,$ldavg15[$.],$blocked[$.] ) = split(/;/);
@@ -145,12 +147,12 @@ $sar_stat{'ldavg15'} += av(\@ldavg15);
 #say "average blocked " . av(\@blocked);
 $sar_stat{'blocked'} += av(\@blocked); 
 
-# sadf -dt /var/log/sysstat/sa19 -- -S | head -2
+# sadf -dt $file -- -S | head -2
 # hostname;interval;timestamp;kbswpfree;kbswpused;%swpused;kbswpcad;%swpcad
 #mail-srv01g;599;2013-09-19 00-45-01;0;0;0,00;0;0,00
 
 my @swpused;
-open(SWAP,"sadf -dt /var/log/sysstat/sa19 -- -S | ");
+open(SWAP,"sadf -dt $file -- -S | ");
 while (<SWAP>) {
 	next if $. == 1;
 	(undef,undef,undef,undef,undef,$swpused[$.] ) = split(/;/);
@@ -160,12 +162,12 @@ close(SWAP);
 #say "average swap used  " . av(\@swpused);
 $sar_stat{'swpused'} += av(\@swpused); 
 
-# sadf -dt /var/log/sysstat/sa19 -- -w | head -2
+# sadf -dt $file -- -w | head -2
 # hostname;interval;timestamp;proc/s;cswch/s
 #mail-srv01g;599;2013-09-19 00-45-01;5,44;1208,76
 
 my ( @proc,@cswch );
-open(PROC,"sadf -dt /var/log/sysstat/sa19 -- -w | ");
+open(PROC,"sadf -dt $file -- -w | ");
 while (<PROC>) {
 	next if $. == 1;
 	(undef,undef,undef,$proc[$.],$cswch[$.]) = split(/;/);
