@@ -22,27 +22,35 @@ sub av {
 	my $average = sum(@{$aref})/scalar(@{$aref});
 	return $average;
 }
+
+my $lxc_virt = `lxctl list | wc -l`;
+say "the best host system!" if $lxc_virt <= 1;
+
+my %sar_stat = ();
+
+my @files = </var/log/sysstat/sa[0-9]?>;
+@files = sort @files;	
+
+foreach (@files) {
 	
-	
-my ( @hostname,@interval,@timestamp,@kbmemfree,@kbmemused,
-		@memused,@kbbuffers,@kbcached,@kbcommit,@commit,@kbactive,@kbinact );
+my ( @hostname,@kbmemfree,@kbmemused );
 
 #mem usage
-open(SAR,"sadf -dt /var/log/sysstat/sa19 -- -r | ");
+#open(SAR,"sadf -dt /var/log/sysstat/sa19 -- -r | ");
+#say $_;
+open(SAR,"sadf -dt $_ -- -r | ");
 while(<SAR>) {
 	next if $. == 1;
 ## hostname;interval;timestamp;kbmemfree;kbmemused;%memused;kbbuffers;kbcached;kbcommit;%commit;kbactive;kbinact
-	( $hostname[$.],$interval[$.],$timestamp[$.],$kbmemfree[$.],$kbmemused[$.],
-		$memused[$.],$kbbuffers[$.],$kbcached[$.],$kbcommit[$.],$commit[$.],
-		$kbactive[$.],$kbinact[$.] ) = split(/;/);
+	( $hostname[$.],undef,undef,$kbmemfree[$.],$kbmemused[$.]) = split(/;/);
 }
 
 close(SAR);
-@kbmemfree  = grep defined, @kbmemfree;
-say "Free average mem on " . $hostname[2] ." is " .  sum(@kbmemfree)/scalar(@kbmemfree) . " Kb";
+#say "Free average mem on " . $hostname[2] ." is " .  av(\@kbmemfree) . " Kb";
+$sar_stat{'memfree'} += av(\@kbmemfree); 
 
-@kbmemused  = grep defined, @kbmemused;
-say "Used average mem on " . $hostname[2] ." is " .  sum(@kbmemused)/scalar(@kbmemused) . " Kb";
+#say "Used average mem on " . $hostname[2] ." is " .  av(\@kbmemused) . " Kb";
+$sar_stat{'memused'} += av(\@kbmemused); 
 
 ## hostname;interval;timestamp;tps;rtps;wtps;bread/s;bwrtn/s
 
@@ -57,7 +65,8 @@ while(<SAR>) {
 }
 close(SAR);
 
-say "average transfer per sec " . av(\@tps);
+#say "average transfer per sec " . av(\@tps);
+$sar_stat{'tps'} += av(\@tps); 
 
 #lvm info
 # pvs --options pv_name,pv_size,pv_free,pv_used --nosuffix --units k --noheadings
@@ -71,13 +80,13 @@ while (<PV>) {
 	( $dev_name[$.],$PSize[$.],$PFree[$.],$PUsed[$.] ) = split();
 }
 close(PV);
-say $dev_name[1];
+#say $dev_name[1];
 
 my $rdev = ( stat "$dev_name[1]" )[ 6 ];
 my $minor = $rdev % 256;
 my $major = int( $rdev / 256 );
 my $pv_dev =  "dev$major-$minor";
-say $pv_dev;
+#say $pv_dev;
 
 # sadf -dt /var/log/sysstat/sa19 -- -d | head
 # hostname;interval;timestamp;DEV;tps;rd_sec/s;wr_sec/s;avgrq-sz;avgqu-sz;await;svctm;%util
@@ -93,9 +102,12 @@ while (<DEV>) {
 }
 close(DEV);
 
-say "average transfer per sec on $pv_dev " . av(\@dev_tps);
-say "average await $pv_dev " . av(\@await);
-say "average util $pv_dev " . av(\@util);
+#say "average transfer per sec on $pv_dev " . av(\@dev_tps);
+$sar_stat{'dev_tps'} += av(\@dev_tps); 
+#say "average await $pv_dev " . av(\@await);
+$sar_stat{'await'} += av(\@await); 
+#say "average util $pv_dev " . av(\@util);
+$sar_stat{'util'} += av(\@util); 
 
 # sadf -dt -P ALL /var/log/sysstat/sa19 | head -2
 # hostname;interval;timestamp;CPU;%user;%nice;%system;%iowait;%steal;%idle
@@ -111,8 +123,10 @@ while (<CPU>) {
 }
 close(CPU);
 
-say "average cpu_iowait  " . av(\@cpu_iowait);
-say "average cpu_idle " . av(\@idle);
+#say "average cpu_iowait  " . av(\@cpu_iowait);
+$sar_stat{'cpu_iowait'} += av(\@cpu_iowait); 
+#say "average cpu_idle " . av(\@idle);
+$sar_stat{'cpu_idle'} += av(\@idle); 
 
 # sadf -dt /var/log/sysstat/sa19 -- -q | head -2
 # hostname;interval;timestamp;runq-sz;plist-sz;ldavg-1;ldavg-5;ldavg-15;blocked
@@ -126,8 +140,10 @@ while (<LA>) {
 }
 close(LA);
 
-say "average la15  " . av(\@ldavg15);
-say "average blocked " . av(\@blocked);
+#say "average la15  " . av(\@ldavg15);
+$sar_stat{'ldavg15'} += av(\@ldavg15); 
+#say "average blocked " . av(\@blocked);
+$sar_stat{'blocked'} += av(\@blocked); 
 
 # sadf -dt /var/log/sysstat/sa19 -- -S | head -2
 # hostname;interval;timestamp;kbswpfree;kbswpused;%swpused;kbswpcad;%swpcad
@@ -141,7 +157,8 @@ while (<SWAP>) {
 #	say $swpused[$.];
 }
 close(SWAP);
-say "average swap used  " . av(\@swpused);
+#say "average swap used  " . av(\@swpused);
+$sar_stat{'swpused'} += av(\@swpused); 
 
 # sadf -dt /var/log/sysstat/sa19 -- -w | head -2
 # hostname;interval;timestamp;proc/s;cswch/s
@@ -154,5 +171,33 @@ while (<PROC>) {
 	(undef,undef,undef,$proc[$.],$cswch[$.]) = split(/;/);
 }
 close(PROC);
-say "average number of tasks created per second " . av(\@proc);
-say "average number of context switches per second " . av(\@cswch);
+#say "average number of tasks created per second " . av(\@proc);
+$sar_stat{'proc'} += av(\@proc); 
+#say "average number of context switches per second " . av(\@cswch);
+$sar_stat{'cswch'} += av(\@cswch); 
+
+}
+my $file_number = $#files+1;
+
+while( my ($key,$value) = each %sar_stat ) {
+	say $key . " => " . $value/$file_number;
+}
+
+
+=hash
+$sar_stat{'memfree'} #= $sar_stat{'memfree'}/($#files+1);
+$sar_stat{'memused'} #= $sar_stat{'memused'}/($#files+1);
+$sar_stat{'tps'};
+$sar_stat{'dev_tps'} += av(\@dev_tps); 
+$sar_stat{'await'} += av(\@await); 
+$sar_stat{'util'} += av(\@util); 
+$sar_stat{'cpu_iowait'} += av(\@cpu_iowait); 
+$sar_stat{'cpu_idle'} += av(\@cpu_idle); 
+$sar_stat{'ldavg15'} += av(\@ldavg15); 
+$sar_stat{'blocked'} += av(\@blocked); 
+$sar_stat{'swpused'} += av(\@swpused); 
+$sar_stat{'proc'} += av(\@proc); 
+$sar_stat{'cswch'} += av(\@cswch); 
+=cut
+
+
