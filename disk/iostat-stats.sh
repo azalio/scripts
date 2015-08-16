@@ -4,7 +4,7 @@
 
 SECONDS=8
 FILE=/tmp/iostat
-IOSTAT=`which iostat` ;
+IOSTAT=`which iostat`
 
 if [[ $? -ne 0 ]]; then
 	echo "Please, install sysstat"
