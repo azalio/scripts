@@ -20,7 +20,7 @@ while len(lines) <= linesNum:
     lines = f.readlines()
 
 indexFrom = len(lines) - linesNum
-for x in xrange(indexFrom,len(lines)):
+for x in xrange(indexFrom, len(lines)):
     print lines[x].strip()
 
 while True:
@@ -33,4 +33,3 @@ while True:
         fSize = newFsize
     else:
         time.sleep(1)
-
