@@ -3,8 +3,8 @@
 import os
 import time
 
-linesNum = 30
-filename = '/var/log/syslog'
+linesNum = 10
+filename = '/tmp/syslog'
 readBytes = 1024
 
 f = open(filename, 'r')
@@ -26,8 +26,10 @@ for x in xrange(indexFrom,len(lines)):
 while True:
     newFsize = os.path.getsize(filename)
     if newFsize > fSize:
-        for line in f.readlines():
+        line = f.readline()
+        while line != '':
             print line.strip()
+            line = f.readline()
         fSize = newFsize
     else:
         time.sleep(1)
