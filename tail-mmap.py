@@ -12,9 +12,6 @@ File = open(filename, "rb")
 size = os.path.getsize(filename)
 data = mmap.mmap(File.fileno(), size, access=1)
 
-# print data[0:5] # выведет первые 5 символов файла
-# print data.read(size) # выведет содержимое файла целиком
-
 pos = size - offset
 data.seek(pos)
 
