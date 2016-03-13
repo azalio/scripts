@@ -1,0 +1,40 @@
+time ./timetail.py /var/log/syslog 
+
+real    0m0.047s
+user    0m0.042s
+sys     0m0.008s
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+    46   16.777 MiB    0.000 MiB   @profile
+    47                             def main():
+    48   16.777 MiB    0.000 MiB       now = time.time()
+    49   16.805 MiB    0.027 MiB       args = parseArgs()
+    50   16.805 MiB    0.000 MiB       filepath = args.filepath
+    51                             
+    52                             
+    53   16.805 MiB    0.000 MiB       if os.path.exists(filepath):
+    54   16.805 MiB    0.000 MiB           with open(filepath, 'r') as f:
+    55                                         # Mar 13 00:34:38 azalio-ub14 anacron[7773]: Job `cron.daily' terminated
+    56   16.809 MiB    0.004 MiB               time_begin_in_log = f.read(15)
+    57   16.809 MiB    0.000 MiB               time_begin = time.strptime(time_begin_in_log + " " +
+    58   16.820 MiB    0.012 MiB                                          time.strftime("%Y"),
+    59   17.023 MiB    0.203 MiB                                          "%b %d %H:%M:%S %Y")
+    60                                 #        print time_begin
+    61   17.023 MiB    0.000 MiB               time_begin_in_unixtime = time.mktime(time_begin)
+    62                                 #        print now
+    63                                 #        print time_begin_in_unixtime
+    64   17.023 MiB    0.000 MiB               if (now - time_begin_in_unixtime > args.time):
+    65   17.023 MiB    0.000 MiB                   filePos = find_point(f,now)
+    66   17.023 MiB    0.000 MiB                   f.seek(filePos)
+    67   17.027 MiB    0.004 MiB                   while True:
+    68   17.027 MiB    0.000 MiB                       line = f.readline()
+    69   17.027 MiB    0.000 MiB                       if line == "":
+    70   17.027 MiB    0.000 MiB                           break
+    71                                                 else:
+    72   17.027 MiB    0.000 MiB                           line = str.strip(line)
+    73   17.027 MiB    0.000 MiB                           print "{}".format(line)
+    74                             
+    75                                         else:
+    76                                             # print from begin file
+    77   17.023 MiB   -0.004 MiB                   pass
