@@ -21,7 +21,10 @@ def parseArgs():
 
 
 def find_point(f,now):
+    os.environ['TZ'] = 'Europe/Moscow'
+    time.tzset()
     time_to_find = now - args.time
+    year = time.strftime("%Y")
     f.seek(0)
     while True:
         filePos = f.tell()
@@ -31,13 +34,13 @@ def find_point(f,now):
             break
         else:
             time_to_struct = time.strptime(time_in_log + " " +
-                                             time.strftime("%Y"),
+                                             year,
                                              "%b %d %H:%M:%S %Y")
             time_to_unixtime = time.mktime(time_to_struct)
             if time_to_unixtime >= time_to_find:
                 return filePos
 
-
+# @profile
 def main():
     now = time.time()
     args = parseArgs()
