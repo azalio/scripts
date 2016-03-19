@@ -106,17 +106,17 @@ def main():
                     else:
                         line = str.strip(line)
 #                        print "{}".format(line)
-			try:
-                       	    print line
-			except IOError:
-				try:
-					sys.stdout.close()
-				except IOError:
-					pass
-				try:
-					sys.stderr.close()
-				except IOError:
-					pass
+                        try:
+                            print line
+                        except IOError:
+                                try:
+                                        sys.stdout.close()
+                                except IOError:
+                                        pass
+                                try:
+                                        sys.stderr.close()
+                                except IOError:
+                                        pass
 
             else:
                 f.seek(0)
