@@ -13,8 +13,6 @@ def parseArgs():
     parser.add_argument("filepath", type=str, help="Path to file.")
     parser.add_argument("--time", type=int, help="time in second from end of \
                         the file", default=600)
-    parser.add_argument("--begin", type=str, help="Start time.")
-    parser.add_argument("--end", type=str, help="End time.")
     global args
     args = parser.parse_args()
     return args
